@@ -5,6 +5,8 @@
 + Template and pocket core integration based on the Analogue Pocket port of [Asteroids by ericlewis](https://github.com/ericlewis/openfpga-asteroids).
 + Multiplayer support via dock.
 
+Note:  File bugs for issues you encounter on the Github tracker.  Any issues are most likely with my integration, and not with the cores themselves.  Please do not engage the original core authors for support requests related to this port.
+
 ## ROM Instructions
 
 ROM files are not included, you must use [mra-tools-c](https://github.com/sebdel/mra-tools-c/) to convert to a singular `astdelux.rom` file, then place the ROM file in `/Assets/astdelux/obsidian.AsteroidsDeluxe`.
