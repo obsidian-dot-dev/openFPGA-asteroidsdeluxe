@@ -86,7 +86,7 @@
                   }                  
                 ]
             },
-             {
+            {
                 "name": "Bonus",
                 "id": 3,
                 "type": "list",

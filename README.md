@@ -9,7 +9,7 @@ Note:  File bugs for issues you encounter on the Github tracker.  Any issues are
 
 ## Release Notes
 v0.9.1
-- Added background image support
+- Added background image support, with toggle on/off from interact menu.
 
 v0.9.0
 - Initial Release

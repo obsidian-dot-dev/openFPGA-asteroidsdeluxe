@@ -8,7 +8,7 @@
             "author": "obsidian",
             "url": "https://github.com/obsidian-dot-dev/openFPGA-asteroidsdeluxe",
             "version": "0.9.1",
-            "date_release": "2024-04-01"
+            "date_release": "2024-03-31"
         },
         "framework": {
             "target_product": "Analogue Pocket",
