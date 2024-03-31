@@ -429,7 +429,7 @@ begin
   
 rom_cs  <= '1' when dn_addr(15 downto 8) < X"20"     else '0';
 
-cpu_prog_rom : work.dpram generic map (13,8)
+cpu_prog_rom : work.dpram generic map (13,8,8192)
 port map
 (
 	clock_a   => Clk_25,

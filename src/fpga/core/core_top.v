@@ -293,12 +293,12 @@ assign dram_ras_n = 'h1;
 assign dram_cas_n = 'h1;
 assign dram_we_n = 'h1;
 
-assign sram_a = 'h0;
-assign sram_dq = {16{1'bZ}};
-assign sram_oe_n  = 1;
-assign sram_we_n  = 1;
-assign sram_ub_n  = 1;
-assign sram_lb_n  = 1;
+// assign sram_a = 'h0;
+// assign sram_dq = {16{1'bZ}};
+// assign sram_oe_n  = 1;
+// assign sram_we_n  = 1;
+// assign sram_ub_n  = 1;
+// assign sram_lb_n  = 1;
 
 assign dbg_tx = 1'bZ;
 assign user1 = 1'bZ;
@@ -466,13 +466,14 @@ mf_pllbase mp1 (
 reg [1:0] cs_language   = 0;
 reg [1:0] cs_ship_count = 0;
 reg [1:0] cs_bonus 		= 0;
-
+reg cs_background = 0;
 always @(posedge clk_74a) begin
   if(bridge_wr) begin
     casex(bridge_addr)
       32'h80000000: cs_language   <= bridge_wr_data[1:0];
       32'h90000000: cs_ship_count <= bridge_wr_data[1:0];
       32'h10000000: cs_bonus		 <= bridge_wr_data[1:0];
+      32'h20000000: cs_background <= bridge_wr_data[0];
     endcase
   end
 end
@@ -528,9 +529,16 @@ always @(posedge clk_25_175) begin
   if (~(vblank_asteroids || hblank)) begin
     video_de_reg <= 1;
 
-    video_rgb_reg[23:16] <= {2{r2}};
-    video_rgb_reg[15:8]  <= {2{g2}};
-    video_rgb_reg[7:0]   <= {2{b2}};
+	 if (cs_background && !r2 && !g2 && !b2) begin
+     video_rgb_reg[23:16] <= {2'b0, pal_rgb_w[23:18]};
+     video_rgb_reg[15:8] <= {2'b0, pal_rgb_w[15:10]};
+     video_rgb_reg[7:0] <= {2'b0, pal_rgb_w[7:2]};
+	 end
+	 else begin
+		 video_rgb_reg[23:16] <= {2{r2}};
+		 video_rgb_reg[15:8]  <= {2{g2}};
+		 video_rgb_reg[7:0]   <= {2{b2}};
+	 end
   end
 
   video_hs_reg <= ~hs_prev && hs;
@@ -538,6 +546,144 @@ always @(posedge clk_25_175) begin
   hs_prev <= hs;
   vs_prev <= vs;
 end
+
+///////////////////////////////////////////////
+// Background
+///////////////////////////////////////////////
+
+reg [18:0] bg_addr;
+reg [18:0] bg_base_addr;
+
+reg [8:0] bg_row;
+wire [7:0] bg_pix;
+
+always @(posedge clk_25_175) begin
+  reg vblank_prev;
+  reg hblank_prev; 
+  vblank_prev <= vblank_asteroids;
+  hblank_prev <= hblank;
+  if (vblank_asteroids) begin
+    bg_base_addr <= 0;
+    bg_addr <= 2;
+	  bg_row <= 0;
+  end  
+  if (!vblank_asteroids && !hblank) begin
+    if (!vblank_asteroids && vblank_prev) begin
+	   bg_base_addr <= 2;
+		 bg_row <= 0;
+	 end
+	 else if (hblank_prev && !hblank) begin
+	   if (bg_row != 0) begin
+        bg_base_addr <= bg_base_addr + 19'd640;
+		  bg_addr <= bg_base_addr + 19'd640;
+		  bg_row <= bg_row + 9'd1;
+		end
+		else begin
+		  bg_base_addr <= bg_base_addr + 19'd640;
+		  bg_addr <= bg_base_addr + 19'd640;
+		end
+	 end
+	 else if (!hblank_prev && !hblank) begin
+		bg_addr <= bg_addr + 19'd1;
+	 end
+  end
+end
+
+reg [7:0] bg_bram_pix;
+
+// Lower 64KB stored in bram
+wire bg_bram_download;
+assign bg_bram_download = (ioctl_wr && ioctl_addr[24] == 1 && ioctl_addr[18:16] == 0);
+
+// Upper 256KB stored in sram
+wire bg_sram_download;
+assign bg_sram_download = (ioctl_wr && ioctl_addr[24] == 1 && ioctl_addr[18:16] != 3'b0);
+
+wire [15:0] bg_sram_load;
+reg [15:0] bg_sram_store;
+reg [7:0]  bg_low;
+reg [16:0] bg_sram_addr;
+reg [7:0]  bg_sram_pix;
+
+wire [2:0] ioctl_bank;
+wire [2:0] bg_sram_bank;
+
+assign ioctl_bank = ioctl_addr[18:16] - 3'b1;
+assign bg_sram_bank = bg_addr[18:16] - 3'b1;
+
+reg bg_sram_wren;
+
+// Remaining chunk of background data is in SRAM.
+always @(posedge clk_50) begin
+  // If downloading the image data...
+  if (bg_sram_download) begin
+     if (ioctl_addr[0] == 0) begin
+	   bg_low <= ioctl_dout;
+	 end
+	 else if (ioctl_addr[0] == 1) begin
+	   bg_sram_store[15:8] <= ioctl_dout;
+		 bg_sram_store[7:0] <= bg_low;
+		 bg_sram_addr <= {ioctl_bank[1:0], ioctl_addr[15:1]}; // account for the 64K offset
+	 end
+  end
+  // If reading the image data back...
+  else begin
+    bg_sram_addr <= {bg_sram_bank[1:0], bg_addr[15:1]}; // account for the 64K offset
+    if (bg_addr[0] == 0) begin
+	   bg_sram_pix <= bg_sram_load[15:8];
+	 end
+    else begin
+	   bg_sram_pix <= bg_sram_load[7:0];
+	 end
+  end
+end
+
+assign bg_pix = bg_addr[18:16] == 0 ? bg_bram_pix : bg_sram_pix;
+
+// 1st chunk of background data is in DPRAM.
+dpram #(
+  .addr_width_g(16),  // 64 KB
+  .data_width_g(8),
+  .num_words_g(65536)
+) bg_bram1 (
+  .address_a(ioctl_addr[15:0]),
+  .address_b(bg_addr[15:0]),
+  .clock_a(clk_50),
+  .clock_b(clk_50),
+  .data_a(ioctl_dout),
+  .enable_a(1'b1),
+  .enable_b(1'b1),
+  .wren_a(bg_bram_download),
+  .wren_b(1'b0),
+  .q_b(bg_bram_pix),
+);
+
+// Remaining background image data is stored in SRAM.
+sram_storage sram_storage(
+	.wr_en(bg_sram_download),
+	
+	.addr(bg_sram_addr),
+	.din(bg_sram_store),
+	.dout(bg_sram_load),
+	
+	.sram_a(sram_a),
+	.sram_dq(sram_dq),
+	.sram_oe_n(sram_oe_n),
+	.sram_we_n(sram_we_n),
+	.sram_ub_n(sram_ub_n),
+	.sram_lb_n(sram_lb_n),
+);
+
+// Background image is 8bpp, indexed.  We need a lut
+// to convert the index values to 24-bit RGB data.
+wire [23:0] pal_rgb_w;
+
+background_lut background_lut(
+  .clk(clk_50),
+  .index(bg_pix),
+  .pal_rgb_w(pal_rgb_w),
+);
+
 
 ///////////////////////////////////////////////
 // Core Instance
@@ -603,7 +749,7 @@ reg [3:0] b2;
 
 always @(posedge clk_50) begin
   r2 <= r;
-	g2 <= g;
+  g2 <= g;
   b2 <= b;
 end
 
@@ -611,7 +757,7 @@ ASTEROIDS_TOP ASTEROIDS_TOP
 (
 	.dn_addr(ioctl_addr[15:0]),
 	.dn_data(ioctl_dout),
-	.dn_wr(ioctl_wr),	
+	.dn_wr(ioctl_wr && (ioctl_addr[24] == 0)),	
 	.clk_6(clk_6),
 	.clk_25(clk_25),
 

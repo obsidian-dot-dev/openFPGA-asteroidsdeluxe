@@ -85,6 +85,46 @@
                     "name": "none"
                   }                  
                 ]
+            },
+             {
+                "name": "Bonus",
+                "id": 3,
+                "type": "list",
+                "enabled": true,
+                "persist": true,
+                "address": "0x10000000",
+                "writeonly": true,
+                "defaultval": 0,
+                "options": [
+                  {
+                    "value": 0,
+                    "name": "10k"
+                  },
+                  {
+                    "value": 1,
+                    "name": "12k"
+                  },
+                  {
+                    "value": 2,
+                    "name": "15k"
+                  },
+                  {
+                    "value": 3,
+                    "name": "none"
+                  }                  
+                ]
+            },
+            {
+              "name": "Background",
+              "id": 4,
+              "type": "check",
+              "enabled": true,
+              "persist": true,
+              "writeonly": true,
+              "address": "0x20000000",
+              "defaultval": 1,
+              "value": 1,
+              "mask": "0xFFFFFFFE"
             }
         ],
         "messages": []

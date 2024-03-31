@@ -7,7 +7,8 @@ USE altera_mf.altera_mf_components.all;
 entity dpram is
 	generic (
 		 addr_width_g : integer := 8;
-		 data_width_g : integer := 8
+		 data_width_g : integer := 8;
+		 num_words_g  : integer := 256
 	); 
 	PORT
 	(
@@ -39,8 +40,8 @@ BEGIN
 		indata_reg_b => "CLOCK1",
 		intended_device_family => "Cyclone V",
 		lpm_type => "altsyncram",
-		numwords_a => 2**addr_width_g,
-		numwords_b => 2**addr_width_g,
+		numwords_a => num_words_g,
+		numwords_b => num_words_g,
 		operation_mode => "BIDIR_DUAL_PORT",
 		outdata_aclr_a => "NONE",
 		outdata_aclr_b => "NONE",

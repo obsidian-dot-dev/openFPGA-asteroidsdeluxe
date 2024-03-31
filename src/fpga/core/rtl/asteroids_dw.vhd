@@ -427,18 +427,18 @@ begin
   end process;
   
   
-video_rgb : work.dpram generic map (19,4)	
+video_rgb : work.dpram generic map (19, 3, 524288)	
 port map
 (
 	clock_a   => clk_25,
 	--clock_a   => clk_6,
 	wren_a    => vram_wren,
 	address_a => dw_addr(18 downto 0),
-	data_a    => vid_data,
+	data_a    => vid_data(3 downto 1),
 
 	clock_b   => clk_25,
 	address_b => (screen & up_addr),
-	q_b       => vid_out
+	q_b       => vid_out(3 downto 1)
 );	
 
   -- job done !

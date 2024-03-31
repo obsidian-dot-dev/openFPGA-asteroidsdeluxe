@@ -11,7 +11,17 @@
                 "size_exact": 0,
                 "size_maximum": 131072,
                 "address": "0x00000000"
-            }
+            },
+            {
+                "name": "BG",
+                "id": 102,
+                "required": true,
+                "parameters": 2,
+                "filename": "background.bin",
+                "size_exact": 0,
+                "size_maximum": 524288,
+                "address": "0x01000000"
+            }            
         ]
     }
 }

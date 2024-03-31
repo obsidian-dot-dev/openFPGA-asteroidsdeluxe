@@ -457,7 +457,7 @@ begin
 	 vec1_cs  <= '1' when dn_addr(15 downto 8) >= X"20" and  dn_addr(15 downto 8) < X"28" else '0';
 	 vec2_cs  <= '1' when dn_addr(15 downto 8) >= X"28" and  dn_addr(15 downto 8) < X"30" else '0';
 
-vec_rom1 : work.dpram generic map (11,8)
+vec_rom1 : work.dpram generic map (11,8,2048)
 port map
 (
 	clock_a   => Clk_25,
@@ -470,7 +470,7 @@ port map
 	q_b       => rom_dout_1
 );	
 
-vec_rom2 : work.dpram generic map (11,8)
+vec_rom2 : work.dpram generic map (11,8,2048)
 port map
 (
 	clock_a   => Clk_25,
